@@ -25,11 +25,11 @@ io.on("connection", (socket) => {
         socket.on("newUser", (username) => {
             console.log(`${username} has join the chat ${roomKey}`);
             socket.join(roomKey);
-            socket.to(roomKey).emit("userConnected", username);
+            socket.broadcast.to(roomKey).emit("userConnected", username);
 
             socket.on("message", (msg, username) => {
                 console.log(`message: ${msg} from ${username}`);
-                io.in(roomKey).emit("message", msg, username);
+                io.to(roomKey).emit("message", msg, username);
             });
 
             socket.on("disconnect", () => {

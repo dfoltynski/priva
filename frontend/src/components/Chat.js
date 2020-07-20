@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { Component } from "react";
 import socketIOClient from "socket.io-client";
 
 import {
@@ -17,102 +17,114 @@ import {
 const ENDPOINT = "http://127.0.0.1:8080";
 const socket = socketIOClient(ENDPOINT);
 
-const Chat = () => {
-    const [goodbyeMessage, setGoodbyeMessage] = useState(false);
-    const [displayMessage, setDisplayMessage] = useState(false);
-    // const [message, setMessage] = useState("");
-    const [nickname, setNickname] = useState("");
-    const [users, setUsers] = useState([]);
-    const [deletedUser, setDeletedUser] = useState("");
-    const [chat, setChat] = useState([]);
+class Chat extends Component {
+    constructor() {
+        super();
+        this.state = {
+            connectedUsers: [],
+            disconnectedUsers: [],
+            user: "",
+            messages: [],
+        };
 
-    let usersArray = [];
-    let messagesArray = [];
+        this.validateMessage = this.validateMessage.bind(this);
+    }
 
-    useEffect(() => {
-        if (localStorage.getItem("key") === null) {
+    componentDidMount() {
+        if (!localStorage.getItem("key")) {
             window.location = "/";
         } else {
             socket.emit("joinRoom", localStorage.getItem("key"));
             socket.emit("newUser", localStorage.getItem("username"));
-            setNickname(localStorage.getItem("username"));
+            let user = localStorage.getItem("username");
+            this.setState({ user });
 
             socket.on("userConnected", (username) => {
-                console.log(`${username} has join the chat`);
-                usersArray.push(username);
-                setUsers(usersArray);
+                console.log(`${username} has connected`);
+                this.setState({
+                    connectedUsers: [...this.state.connectedUsers, username],
+                });
             });
-            // socket.on("message", (msg, username) => {
-            //     console.log("on message");
-            //     messagesObject = [{ username, msg }];
-            //     setChat(messagesObject);
-            // });
-            // socket.on("disconnected", (username) => {
-            //     console.log(`${username} left`);
-            //     setGoodbyeMessage(true);
-            //     setDeletedUser(username);
-            // });
-            return () => {
-                localStorage.removeItem("key");
-                localStorage.removeItem("username");
-            };
-        }
-    }, []);
 
-    const validateMessage = (e) => {
+            socket.on("message", (msg, username) => {
+                this.setState({
+                    messages: [...this.state.messages, { msg, username }],
+                });
+            });
+
+            socket.on("disconnected", (username) => {
+                console.log(`${username} has disconnected`);
+                this.setState({
+                    disconnectedUsers: [
+                        ...this.state.disconnectedUsers,
+                        username,
+                    ],
+                });
+            });
+        }
+    }
+
+    componentWillUnmount() {
+        localStorage.removeItem("key");
+        localStorage.removeItem("username");
+    }
+
+    validateMessage(e) {
         e.preventDefault();
         const message = document.querySelector("input");
         if (message.value.trim() === "") {
             message.value = "";
             message.focus();
         } else {
-            socket.emit("message", message.value, nickname);
+            console.log(`${this.state.user}: ${message.value}`);
+            socket.emit("message", message.value, this.state.user);
             message.value = "";
             message.focus();
-
-            socket.on("message", (msg, username) => {
-                console.log(`${username}: ${msg}`);
-                messagesArray.push({ username, msg });
-                setChat(messagesArray);
-            });
+            document.querySelectorAll(
+                "div"
+            )[2].scrollTop = document.querySelectorAll("div")[2].scrollHeight;
         }
-    };
+    }
 
-    return (
-        <Wrapper>
-            <ChatField>
-                {users.map((user) => (
-                    <MessageField>
-                        <Username>{user} has join the chat</Username>
-                    </MessageField>
-                ))}
+    render() {
+        return (
+            <Wrapper>
+                <ChatField>
+                    {this.state.connectedUsers.map((connectedUser) => (
+                        <MessageField>
+                            <Username>
+                                {connectedUser} has join the chat
+                            </Username>
+                        </MessageField>
+                    ))}
 
-                {chat.map((message) => (
-                    <MessageField>
-                        <Username>{message["username"]}</Username>
-                        <Message>{message["msg"]}</Message>
-                    </MessageField>
-                ))}
+                    {this.state.messages.map((message) => (
+                        <MessageField>
+                            <Username>{message["username"]}</Username>
+                            <Message>{message["msg"]}</Message>
+                        </MessageField>
+                    ))}
 
-                {/* {goodbyeMessage ? (
-                    <MessageField>
-                        <Username>{deletedUser} left the chat</Username>
-                    </MessageField>
-                ) : (
-                    ""
-                )} */}
-            </ChatField>
+                    {this.state.disconnectedUsers.map((disconnectedUser) => (
+                        <MessageField>
+                            <Username>
+                                {disconnectedUser} has left the chat
+                            </Username>
+                        </MessageField>
+                    ))}
+                </ChatField>
 
-            <SendField>
-                <Form onSubmit={validateMessage}>
-                    <InputMessage placeholder="Type a message..." />
-                    <SendButton>
-                        <SendIconStyle />
-                    </SendButton>
-                </Form>
-            </SendField>
-        </Wrapper>
-    );
-};
+                <SendField>
+                    <Form onSubmit={this.validateMessage}>
+                        <InputMessage placeholder="Type a message..." />
+                        <SendButton>
+                            <SendIconStyle />
+                        </SendButton>
+                    </Form>
+                </SendField>
+            </Wrapper>
+        );
+    }
+}
 
 export default Chat;

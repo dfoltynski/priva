@@ -9,6 +9,8 @@ Priva is secure, simple and private chat
 
 ## Visit Priva
 
+https://privaapp.herokuapp.com/
+
 ## Or install
 
 ```bash

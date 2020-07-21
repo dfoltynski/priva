@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import socketIOClient from "socket.io-client";
 
 import {
     BackgroundPanel,
@@ -11,8 +10,6 @@ import {
     Button,
     ButtonArea,
 } from "./StyledComponents";
-
-const ENDPOINT = "http://127.0.0.1:8080";
 
 const JoinRoom = () => {
     const simpleValidation = (e) => {

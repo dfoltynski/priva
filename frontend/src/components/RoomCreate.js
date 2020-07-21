@@ -12,13 +12,12 @@ import {
     ButtonArea,
 } from "./StyledComponents";
 
-const ENDPOINT = "http://127.0.0.1:8080";
 
 const RoomCreate = () => {
     const [key, setKey] = useState("");
 
     useEffect(() => {
-        const socket = socketIOClient(ENDPOINT);
+        const socket = socketIOClient();
 
         socket.emit("genKey");
 

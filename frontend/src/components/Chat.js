@@ -14,8 +14,7 @@ import {
     Form,
 } from "./StyledComponents";
 
-const ENDPOINT = "http://127.0.0.1:8080";
-const socket = socketIOClient(ENDPOINT);
+const socket = socketIOClient();
 
 class Chat extends Component {
     constructor() {
@@ -40,7 +39,6 @@ class Chat extends Component {
             this.setState({ user });
 
             socket.on("userConnected", (username) => {
-                console.log(`${username} has connected`);
                 this.setState({
                     connectedUsers: [...this.state.connectedUsers, username],
                 });
@@ -53,7 +51,6 @@ class Chat extends Component {
             });
 
             socket.on("disconnected", (username) => {
-                console.log(`${username} has disconnected`);
                 this.setState({
                     disconnectedUsers: [
                         ...this.state.disconnectedUsers,
@@ -76,7 +73,6 @@ class Chat extends Component {
             message.value = "";
             message.focus();
         } else {
-            console.log(`${this.state.user}: ${message.value}`);
             socket.emit("message", message.value, this.state.user);
             message.value = "";
             message.focus();
